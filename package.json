@@ -2,10 +2,6 @@
   "name": "jingyue-nav-pages",
   "private": true,
   "scripts": {
-    "dev:pages": "wrangler pages dev public",
-    "deploy:pages": "wrangler pages deploy public"
-  },
-  "devDependencies": {
-    "wrangler": "^4.14.1"
+    "dev": "node server.mjs"
   }
 }
