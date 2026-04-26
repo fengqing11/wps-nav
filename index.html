@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>景越文档导航站</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <h1>景越文档导航</h1>
+        <p>WPS 文档内嵌导航小站</p>
+      </div>
+
+      <div class="toolbar">
+        <input id="searchInput" type="search" placeholder="搜索文档、分组、关键词" />
+        <div class="toolbar-actions">
+          <button id="refreshBtn" class="btn small">刷新数据</button>
+        </div>
+        <div id="statusBar" class="status-bar">准备加载动态数据…</div>
+      </div>
+
+      <nav id="nav" class="nav"></nav>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <h2 id="docTitle">请选择一个文档</h2>
+          <p id="docMeta">左侧选择后在这里预览</p>
+        </div>
+        <div class="actions">
+          <button id="focusModeBtn" class="btn secondary">沉浸预览</button>
+          <button id="fullscreenBtn" class="btn secondary">浏览器全屏</button>
+          <a id="openLink" class="btn secondary" href="#" target="_blank" rel="noopener noreferrer">新标签打开</a>
+          <button id="copyLink" class="btn">复制链接</button>
+        </div>
+      </header>
+
+      <section id="viewerWrap" class="viewer-wrap">
+        <div id="embedNotice" class="notice">
+          <strong>说明：</strong> 如果 WPS 文档不允许 iframe 内嵌，右上角点 <strong>“新标签打开”</strong> 即可正常查看。
+        </div>
+        <iframe id="viewer" title="WPS 文档预览" referrerpolicy="no-referrer" allowfullscreen></iframe>
+      </section>
+    </main>
+  </div>
+
+  <script src="./app.js"></script>
+</body>
+</html>
