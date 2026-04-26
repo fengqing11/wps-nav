@@ -4,6 +4,8 @@ compatibility_date = "2026-04-26"
 
 [vars]
 WPS_WEBHOOK = "https://www.kdocs.cn/api/v3/ide/file/corH6Pn7C9vm/script/V2-3VpBguvVTfZKpjuTNO5VE3/sync_task"
+WPS_TOKEN = "nT8dIhURZ1NlhWPAk7Q3u"
 
 [env.preview.vars]
 WPS_WEBHOOK = "https://www.kdocs.cn/api/v3/ide/file/corH6Pn7C9vm/script/V2-3VpBguvVTfZKpjuTNO5VE3/sync_task"
+WPS_TOKEN = "nT8dIhURZ1NlhWPAk7Q3u"
