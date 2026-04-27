@@ -18,6 +18,30 @@ body {
   font-family: "Microsoft YaHei", "PingFang SC", system-ui, sans-serif;
   color: var(--text);
   background: linear-gradient(180deg, #0a0f1d 0%, #0f1728 100%);
+  scrollbar-color: rgba(115,167,255,.35) rgba(255,255,255,.04);
+  scrollbar-width: thin;
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-track {
+  background: rgba(255,255,255,.03);
+}
+*::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(115,167,255,.38), rgba(79,124,255,.26));
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(115,167,255,.58), rgba(79,124,255,.42));
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+*::-webkit-scrollbar-corner {
+  background: transparent;
 }
 .app {
   display: grid;
@@ -29,6 +53,7 @@ body {
   background: rgba(8, 12, 22, .88);
   backdrop-filter: blur(12px);
   overflow: auto;
+  scrollbar-gutter: stable;
 }
 body.focus-mode .app {
   grid-template-columns: 1fr;
