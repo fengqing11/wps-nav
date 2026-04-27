@@ -1,17 +1,21 @@
 <svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="bg" x1="40" y1="28" x2="216" y2="228" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#78A9FF"/>
+    <linearGradient id="bg" x1="36" y1="24" x2="220" y2="232" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#7CB2FF"/>
       <stop offset="1" stop-color="#4F7CFF"/>
     </linearGradient>
-    <linearGradient id="card" x1="76" y1="58" x2="182" y2="188" gradientUnits="userSpaceOnUse">
+    <linearGradient id="glass" x1="64" y1="52" x2="192" y2="204" gradientUnits="userSpaceOnUse">
       <stop stop-color="#FFFFFF" stop-opacity="0.98"/>
-      <stop offset="1" stop-color="#EEF4FF" stop-opacity="0.94"/>
+      <stop offset="1" stop-color="#EAF1FF" stop-opacity="0.92"/>
     </linearGradient>
-    <filter id="shadow" x="20" y="18" width="216" height="220" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+    <linearGradient id="accent" x1="92" y1="74" x2="170" y2="174" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#5E90FF"/>
+      <stop offset="1" stop-color="#2F63F5"/>
+    </linearGradient>
+    <filter id="shadow" x="34" y="30" width="188" height="196" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
       <feFlood flood-opacity="0" result="BackgroundImageFix"/>
       <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
-      <feOffset dy="10"/>
+      <feOffset dy="12"/>
       <feGaussianBlur stdDeviation="12"/>
       <feColorMatrix type="matrix" values="0 0 0 0 0.184314 0 0 0 0 0.309804 0 0 0 0 0.678431 0 0 0 0.22 0"/>
       <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_1_1"/>
@@ -22,13 +26,13 @@
   <rect x="24" y="24" width="208" height="208" rx="52" fill="url(#bg)"/>
 
   <g filter="url(#shadow)">
-    <path d="M78 52C78 45.3726 83.3726 40 90 40H148.544C151.727 40 154.78 41.2643 157.03 43.5147L177.485 63.9706C179.736 66.2209 181 69.2739 181 72.456L181 176C181 182.627 175.627 188 169 188H90C83.3726 188 78 182.627 78 176V52Z" fill="url(#card)"/>
-    <path d="M148 40V64C148 70.6274 153.373 76 160 76H181" stroke="#CFE0FF" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="58" y="46" width="140" height="164" rx="30" fill="url(#glass)"/>
+    <rect x="70" y="58" width="116" height="140" rx="22" fill="url(#accent)" fill-opacity="0.1"/>
 
-    <path d="M101 92H151" stroke="#78A9FF" stroke-width="10" stroke-linecap="round"/>
-    <path d="M101 116H145" stroke="#98BBFF" stroke-width="10" stroke-linecap="round"/>
-    <path d="M101 140H130" stroke="#B5CBFF" stroke-width="10" stroke-linecap="round"/>
+    <path d="M112 84V144C112 160.569 98.5685 174 82 174" stroke="url(#accent)" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M138 84L160 116L182 84" stroke="url(#accent)" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M160 116V172" stroke="url(#accent)" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
 
-    <path d="M151 128L160.5 133.2L170 128V158.5L160.5 153.2L151 158.5V128Z" fill="#FFD76A" stroke="#F4B400" stroke-width="6" stroke-linejoin="round"/>
+    <circle cx="82" cy="174" r="8" fill="#2F63F5"/>
   </g>
 </svg>
