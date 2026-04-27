@@ -7,6 +7,7 @@ const openLink = document.getElementById('openLink');
 const copyLink = document.getElementById('copyLink');
 const refreshBtn = document.getElementById('refreshBtn');
 const toggleAllGroupsBtn = document.getElementById('toggleAllGroupsBtn');
+const themeToggleBtn = document.getElementById('themeToggleBtn');
 const statusBar = document.getElementById('statusBar');
 const focusModeBtn = document.getElementById('focusModeBtn');
 const fullscreenBtn = document.getElementById('fullscreenBtn');
@@ -31,12 +32,42 @@ const currentDocParam = urlParams.get('doc') || '';
 const RECENTS_KEY = `jingyue-nav:recent:${currentTeam}`;
 const FAVORITES_KEY = `jingyue-nav:favorites:${currentTeam}`;
 const COLLAPSED_GROUPS_KEY = `jingyue-nav:collapsed-groups:${currentTeam}`;
+const THEME_KEY = 'jingyue-nav:theme';
 const FAVORITES_LIMIT = 20;
 
 function updateTeamBranding() {
   document.title = `${currentTeamLabel}文档导航`;
   if (siteTitle) siteTitle.textContent = `${currentTeamLabel}文档导航`;
   if (siteSubtitle) siteSubtitle.textContent = `${currentTeamLabel} 团队的 WPS 文档内嵌导航小站`;
+}
+
+function getCurrentTheme() {
+  return document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
+}
+
+function updateThemeToggleButton() {
+  if (!themeToggleBtn) return;
+  themeToggleBtn.textContent = getCurrentTheme() === 'dark' ? '亮色主题' : '暗色主题';
+}
+
+function applyTheme(theme, { persist = true } = {}) {
+  const nextTheme = theme === 'dark' ? 'dark' : 'light';
+  document.documentElement.dataset.theme = nextTheme;
+  updateThemeToggleButton();
+  if (persist) {
+    localStorage.setItem(THEME_KEY, nextTheme);
+  }
+}
+
+function loadTheme() {
+  const savedTheme = localStorage.getItem(THEME_KEY);
+  applyTheme(savedTheme === 'dark' ? 'dark' : 'light', { persist: false });
+}
+
+function toggleTheme() {
+  const nextTheme = getCurrentTheme() === 'dark' ? 'light' : 'dark';
+  applyTheme(nextTheme);
+  statusBar.textContent = nextTheme === 'dark' ? '已切换到暗色主题' : '已切换到亮色主题';
 }
 
 function normalizeData(groups) {
@@ -474,6 +505,7 @@ copyLink.addEventListener('click', async () => {
 
 refreshBtn.addEventListener('click', loadDynamicData);
 toggleAllGroupsBtn?.addEventListener('click', toggleAllGroups);
+themeToggleBtn?.addEventListener('click', toggleTheme);
 focusModeBtn.addEventListener('click', toggleFocusMode);
 fullscreenBtn.addEventListener('click', toggleFullscreen);
 document.addEventListener('fullscreenchange', () => {
@@ -492,6 +524,7 @@ searchInput.addEventListener('input', event => {
 });
 
 localStorage.removeItem(RECENTS_KEY);
+loadTheme();
 loadFavoriteDocs();
 loadCollapsedGroups();
 updateTeamBranding();
