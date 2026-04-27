@@ -49,7 +49,7 @@ function updateThemeToggleButton() {
   if (!themeToggleBtn) return;
   const isDark = getCurrentTheme() === 'dark';
   const nextLabel = isDark ? '切换到亮色主题' : '切换到暗色主题';
-  themeToggleBtn.textContent = isDark ? '☀️' : '🌙';
+  themeToggleBtn.classList.toggle('is-dark', isDark);
   themeToggleBtn.setAttribute('aria-label', nextLabel);
   themeToggleBtn.setAttribute('title', nextLabel);
 }

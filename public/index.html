@@ -34,7 +34,19 @@
           <p id="docMeta">左侧选择后在这里预览</p>
         </div>
         <div class="actions">
-          <button id="themeToggleBtn" class="icon-btn" type="button" aria-label="切换到暗色主题" title="切换到暗色主题">🌙</button>
+          <button id="themeToggleBtn" class="icon-btn" type="button" aria-label="切换到暗色主题" title="切换到暗色主题">
+            <span class="theme-icon theme-icon-moon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"></path>
+              </svg>
+            </span>
+            <span class="theme-icon theme-icon-sun" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="4"></circle>
+                <path d="M12 2v2.2M12 19.8V22M4.22 4.22l1.56 1.56M18.22 18.22l1.56 1.56M2 12h2.2M19.8 12H22M4.22 19.78l1.56-1.56M18.22 5.78l1.56-1.56"></path>
+              </svg>
+            </span>
+          </button>
           <button id="focusModeBtn" class="btn secondary" type="button">沉浸预览</button>
           <button id="fullscreenBtn" class="btn secondary" type="button">浏览器全屏</button>
           <a id="openLink" class="btn secondary" href="#" target="_blank" rel="noopener noreferrer">新标签打开</a>
