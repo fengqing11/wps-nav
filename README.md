@@ -4,9 +4,18 @@
 
 `mini-sites/jingyue-nav`
 
-## 当前推荐用法
+## 本次整理后的结构
 
-不走 Wrangler，本项目保留两种清晰用途：
+- `public/`：唯一静态前端目录
+- `functions/api/nav-data.js`：Cloudflare Pages 接口
+- `lib/nav-core.mjs`：Node / Pages 共用的数据归一化与配置逻辑
+- `server.mjs`：本地 Node 调试服务
+
+根目录旧版 `index.html` / `app.js` / `styles.css` 已不再作为正式入口使用，本地与线上现在统一走 `public/`。
+
+---
+
+## 当前推荐用法
 
 ### 1）本地 Node 调试
 
@@ -45,19 +54,22 @@ npm run dev
 
 直接把 GitHub 仓库连接到 Cloudflare Pages，**不要用 Wrangler CLI**。
 
-保留的目录结构：
+#### Pages 构建配置
 
-- `public/`：静态页面
-- `functions/api/nav-data.js`：Cloudflare Pages Functions
+- **Framework preset**：None
+- **Build command**：留空
+- **Build output directory**：`public`
 
 #### Cloudflare Pages 里要配的环境变量
 
-`wrangler.toml` 里只保留这两个明文变量：
+明文变量：
 
 - `WPS_WEBHOOK_JINGYUE`
 - `WPS_WEBHOOK_YUYAN`
 
-`WPS_TOKEN` 不要写在 `wrangler.toml` 的 `[vars]` 里，要作为 **Secret** 单独配置。
+Secret：
+
+- `WPS_TOKEN`
 
 可用官方命令：
 
@@ -80,11 +92,18 @@ required = ["WPS_TOKEN"]
 
 这样本地开发和部署时都会校验 `WPS_TOKEN` 是否存在。
 
-#### Pages 构建配置
+---
 
-- **Framework preset**：None
-- **Build command**：留空
-- **Build output directory**：`public`
+## 当前行为
+
+- 页面启动后直接请求 `/api/nav-data`
+- 本地 Node 调试时，`/api/nav-data` 由 `server.mjs` 提供
+- Cloudflare Pages 部署时，`/api/nav-data` 由 `functions/api/nav-data.js` 提供
+- 前端只消费精简后的导航结构，不再依赖接口返回 `raw` / `logs`
+- 本地与线上接口都加了：
+  - 10 秒超时
+  - 30 秒短缓存
+  - 上次成功数据兜底（stale 返回）
 
 ---
 
@@ -95,17 +114,21 @@ required = ["WPS_TOKEN"]
 - `?team=jingyue` → 景越
 - `?team=yuyan` → 钰衍
 
-示例：
+现在还支持把当前选中文档写回 URL，例如：
 
-- `http://127.0.0.1:8090/?team=jingyue`
-- `http://127.0.0.1:8090/?team=yuyan`
+- `?team=jingyue&doc=https%3A%2F%2F...`
 
-## 当前行为
+这样刷新页面后会尽量回到刚才查看的文档。
 
-- 页面启动后直接请求 `/api/nav-data`
-- 本地 Node 调试时，`/api/nav-data` 由 `server.mjs` 提供
-- Cloudflare Pages 部署时，`/api/nav-data` 由 `functions/api/nav-data.js` 提供
-- 如果动态数据失败，页面会明确提示失败，不再展示静态兜底数据
+---
+
+## 收藏
+
+前端会按团队把 **我的收藏** 保存在浏览器 `localStorage`，默认保留 20 条。
+
+这些都只保存在本机浏览器里，不上传服务端。
+
+---
 
 ## 为什么不前端直调 WPS webhook
 

@@ -2,6 +2,8 @@
   "name": "jingyue-nav-pages",
   "private": true,
   "scripts": {
-    "dev": "node server.mjs"
+    "dev": "node server.mjs",
+    "start": "node server.mjs",
+    "check": "node --check server.mjs && node --check public/app.js && node --check functions/api/nav-data.js && node --check lib/nav-core.mjs"
   }
 }

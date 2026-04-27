@@ -1,138 +1,114 @@
-function extractItemsFromFields(fields = {}) {
-  const links = [];
-  for (const [key, value] of Object.entries(fields)) {
-    if (!Array.isArray(value)) continue;
-    for (const item of value) {
-      if (item && typeof item === 'object' && item.address) {
-        links.push({
-          field: key,
-          title: item.displayText || item.address,
-          url: item.address
-        });
-      }
-    }
-  }
-  return links;
+import {
+  CACHE_TTL_MS,
+  REQUEST_TIMEOUT_MS,
+  buildErrorPayload,
+  buildSuccessPayload,
+  normalizeDynamicData,
+  resolveTeamConfig
+} from '../../lib/nav-core.mjs';
+
+const cache = new Map();
+
+function getCached(team) {
+  const entry = cache.get(team);
+  if (!entry) return null;
+  if (Date.now() - entry.savedAt > CACHE_TTL_MS) return null;
+  return entry;
 }
 
-function normalizeDynamicData(raw) {
-  const result = raw?.data?.result ?? raw?.result ?? raw;
-
-  if (Array.isArray(result) && result.length && result[0]?.fields) {
-    return result.map((record, index) => {
-      const fields = record.fields || {};
-      const group = String(fields['标题'] || fields['title'] || fields['名称'] || `未命名分组-${index + 1}`).trim();
-      const items = extractItemsFromFields(fields);
-      const modules = Array.isArray(fields['模块']) ? fields['模块'] : [];
-      const cover = Array.isArray(fields['封面']) ? fields['封面'][0] : null;
-
-      return {
-        id: record.id || String(index + 1),
-        group,
-        modules,
-        cover,
-        items
-      };
-    }).filter(group => group.items.length);
-  }
-
-  if (Array.isArray(result)) return result;
-  if (Array.isArray(result?.groups)) return result.groups;
-  if (Array.isArray(result?.data)) return result.data;
-  if (Array.isArray(result?.items)) return [{ group: result.group || result.name || '默认分组', items: result.items }];
-  return null;
-}
-
-const TEAM_CONFIG = {
-  jingyue: {
-    label: '景越',
-    webhookKey: 'WPS_WEBHOOK_JINGYUE'
-  },
-  yuyan: {
-    label: '钰衍',
-    webhookKey: 'WPS_WEBHOOK_YUYAN'
-  }
-};
-
-function resolveTeam(env, team = 'jingyue') {
-  const teamKey = String(team || 'jingyue').trim().toLowerCase();
-  const config = TEAM_CONFIG[teamKey];
-  if (!config) return { error: `Unsupported team: ${teamKey}` };
-
-  const webhook = env[config.webhookKey];
-  const token = env.WPS_TOKEN;
-  if (!webhook || !token) {
-    return {
-      error: `Missing ${config.webhookKey} or WPS_TOKEN binding`,
-      team: teamKey,
-      label: config.label
-    };
-  }
-
-  return {
-    team: teamKey,
-    label: config.label,
-    webhook,
-    token
-  };
+function setCached(team, payload) {
+  cache.set(team, {
+    payload,
+    savedAt: Date.now()
+  });
 }
 
 export async function onRequestGet(context) {
   const { env, request } = context;
   const url = new URL(request.url);
-  const resolved = resolveTeam(env, url.searchParams.get('team') || 'jingyue');
+  const team = url.searchParams.get('team') || 'jingyue';
+  const cached = getCached(team);
 
-  if (resolved.error) {
+  if (cached) {
     return Response.json({
-      ok: false,
-      error: resolved.error,
-      team: resolved.team || null,
-      availableTeams: Object.keys(TEAM_CONFIG)
-    }, { status: 500 });
+      ...cached.payload,
+      cached: true
+    }, {
+      headers: {
+        'Cache-Control': 'public, max-age=15, stale-while-revalidate=45'
+      }
+    });
   }
 
-  const { webhook, token, team, label } = resolved;
+  const resolved = resolveTeamConfig(env, team, { allowFallback: false });
+  if (resolved.error) {
+    return Response.json(buildErrorPayload(null, {
+      error: resolved.error,
+      code: resolved.code,
+      team: resolved.team || team
+    }), { status: 500 });
+  }
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
   try {
-    const resp = await fetch(webhook, {
+    const resp = await fetch(resolved.webhook, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'AirScript-Token': token
+        'AirScript-Token': resolved.token
       },
-      body: JSON.stringify({ Context: { argv: {} } })
+      body: JSON.stringify({ Context: { argv: {} } }),
+      signal: controller.signal
     });
 
     const raw = await resp.json();
-
     if (!resp.ok) {
-      return Response.json({
-        ok: false,
+      return Response.json(buildErrorPayload(null, {
         error: `WPS HTTP ${resp.status}: ${raw?.result || raw?.msg || '请求失败'}`,
         code: raw?.result || raw?.errno || 'WPS_HTTP_ERROR',
         httpStatus: resp.status,
-        response: raw
-      }, { status: 500 });
+        team: resolved.team
+      }), { status: 500 });
     }
 
     const groups = normalizeDynamicData(raw);
-    return Response.json({
-      ok: true,
-      source: 'wps-webhook',
-      team,
-      teamLabel: label,
+    const payload = buildSuccessPayload({
+      team: resolved.team,
+      teamLabel: resolved.label,
       groups,
-      logs: raw?.data?.logs || [],
-      raw,
-      summary: {
-        groupCount: Array.isArray(groups) ? groups.length : 0,
-        itemCount: Array.isArray(groups) ? groups.reduce((sum, g) => sum + (Array.isArray(g.items) ? g.items.length : 0), 0) : 0
+      fetchedAt: new Date().toISOString()
+    });
+
+    setCached(resolved.team, payload);
+
+    return Response.json(payload, {
+      headers: {
+        'Cache-Control': 'public, max-age=15, stale-while-revalidate=45'
       }
     });
   } catch (error) {
-    return Response.json({
-      ok: false,
-      error: error.message || 'Unknown error'
-    }, { status: 500 });
+    const fallback = cache.get(resolved.team);
+    if (fallback) {
+      return Response.json({
+        ...fallback.payload,
+        cached: true,
+        stale: true
+      }, {
+        headers: {
+          'Cache-Control': 'public, max-age=5, stale-while-revalidate=45'
+        }
+      });
+    }
+
+    const isAbort = error?.name === 'AbortError';
+    return Response.json(buildErrorPayload({
+      message: isAbort ? '请求 WPS webhook 超时，请稍后重试' : error.message,
+      code: isAbort ? 'UPSTREAM_TIMEOUT' : 'NETWORK_ERROR',
+      team: resolved.team
+    }), { status: 500 });
+  } finally {
+    clearTimeout(timeoutId);
   }
 }

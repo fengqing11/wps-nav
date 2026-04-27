@@ -1,7 +1,6 @@
 const nav = document.getElementById('nav');
 const searchInput = document.getElementById('searchInput');
 const viewer = document.getElementById('viewer');
-const viewerWrap = document.getElementById('viewerWrap');
 const docTitle = document.getElementById('docTitle');
 const docMeta = document.getElementById('docMeta');
 const openLink = document.getElementById('openLink');
@@ -16,6 +15,7 @@ const siteSubtitle = document.getElementById('siteSubtitle');
 let activeUrl = '';
 let activeButton = null;
 let currentData = [];
+let favoriteDocs = [];
 
 const TEAM_LABELS = {
   jingyue: '景越',
@@ -25,11 +25,10 @@ const TEAM_LABELS = {
 const urlParams = new URLSearchParams(window.location.search);
 const currentTeam = (urlParams.get('team') || 'jingyue').trim().toLowerCase();
 const currentTeamLabel = TEAM_LABELS[currentTeam] || currentTeam;
-
-
-function safeText(text) {
-  return String(text).replace(/[&<>\"]/g, s => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[s]));
-}
+const currentDocParam = urlParams.get('doc') || '';
+const RECENTS_KEY = `jingyue-nav:recent:${currentTeam}`;
+const FAVORITES_KEY = `jingyue-nav:favorites:${currentTeam}`;
+const FAVORITES_LIMIT = 20;
 
 function updateTeamBranding() {
   document.title = `${currentTeamLabel}文档导航`;
@@ -54,6 +53,136 @@ function normalizeData(groups) {
     .filter(group => group.items.length);
 }
 
+function loadJsonList(key) {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(key) || '[]');
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function loadFavoriteDocs() {
+  favoriteDocs = loadJsonList(FAVORITES_KEY);
+}
+
+function saveFavoriteDocs() {
+  localStorage.setItem(FAVORITES_KEY, JSON.stringify(favoriteDocs.slice(0, FAVORITES_LIMIT)));
+}
+
+function isFavorite(url) {
+  return favoriteDocs.some(item => item.url === url);
+}
+
+function toggleFavorite(doc) {
+  if (!doc?.url) return;
+
+  if (isFavorite(doc.url)) {
+    favoriteDocs = favoriteDocs.filter(item => item.url !== doc.url);
+    statusBar.textContent = `已取消收藏：${doc.title}`;
+  } else {
+    favoriteDocs = [{ ...doc, savedAt: Date.now() }, ...favoriteDocs.filter(item => item.url !== doc.url)].slice(0, FAVORITES_LIMIT);
+    statusBar.textContent = `已收藏：${doc.title}`;
+  }
+
+  saveFavoriteDocs();
+  render(currentData, searchInput.value);
+  restoreActiveButton();
+}
+
+function updateUrlForDoc(url) {
+  const nextUrl = new URL(window.location.href);
+  if (url) {
+    nextUrl.searchParams.set('doc', url);
+  } else {
+    nextUrl.searchParams.delete('doc');
+  }
+  history.replaceState(null, '', nextUrl.toString());
+}
+
+function buildEmpty(message) {
+  nav.innerHTML = '';
+  const empty = document.createElement('div');
+  empty.className = 'empty';
+  empty.textContent = message;
+  nav.appendChild(empty);
+}
+
+function createFavoriteButton(item, groupName) {
+  const star = document.createElement('button');
+  star.type = 'button';
+  star.className = `favorite-toggle${isFavorite(item.url) ? ' active' : ''}`;
+  star.title = isFavorite(item.url) ? '取消收藏' : '加入收藏';
+  star.setAttribute('aria-label', isFavorite(item.url) ? '取消收藏' : '加入收藏');
+  star.textContent = isFavorite(item.url) ? '★' : '☆';
+  star.addEventListener('click', event => {
+    event.stopPropagation();
+    toggleFavorite({ title: item.title, url: item.url, group: groupName });
+  });
+  return star;
+}
+
+function createItemButton(item, groupName) {
+  const btn = document.createElement('button');
+  btn.className = 'item';
+  btn.type = 'button';
+  btn.dataset.url = item.url;
+  btn.dataset.title = item.title;
+  btn.dataset.group = groupName;
+
+  const top = document.createElement('div');
+  top.className = 'item-top';
+
+  const title = document.createElement('span');
+  title.className = 'item-title';
+  title.textContent = item.title;
+
+  top.append(title, createFavoriteButton(item, groupName));
+
+  const url = document.createElement('span');
+  url.className = 'item-url';
+  url.textContent = item.url;
+
+  btn.append(top, url);
+  btn.addEventListener('click', () => selectDoc(btn));
+  return btn;
+}
+
+function buildSection(titleText, metaText, items, sectionClass = '') {
+  const section = document.createElement('section');
+  section.className = `group${sectionClass ? ` ${sectionClass}` : ''}`;
+
+  const title = document.createElement('h3');
+  title.className = 'group-title';
+  title.textContent = titleText;
+
+  const meta = document.createElement('span');
+  meta.className = 'group-meta';
+  meta.textContent = metaText;
+  title.appendChild(meta);
+
+  const list = document.createElement('div');
+  list.className = 'item-list';
+  items.forEach(({ item, group }) => list.appendChild(createItemButton(item, group)));
+
+  section.append(title, list);
+  return section;
+}
+
+function renderFavoriteSection(container, keyword) {
+  const q = keyword.trim().toLowerCase();
+  const availableMap = new Map(currentData.flatMap(group => group.items.map(item => [item.url, { item, group: group.group }])));
+  const matched = favoriteDocs
+    .map(favorite => availableMap.get(favorite.url) || { item: favorite, group: favorite.group || '未分组' })
+    .filter(({ item, group }) => {
+      if (!q) return true;
+      return [group, item.title, item.url].join(' ').toLowerCase().includes(q);
+    });
+
+  if (!matched.length) return;
+  container.appendChild(buildSection('我的收藏', `${matched.length} 项`, matched, 'favorite-group'));
+}
+
 function render(data, keyword = '') {
   const q = keyword.trim().toLowerCase();
   const groups = data
@@ -66,27 +195,35 @@ function render(data, keyword = '') {
     }))
     .filter(group => group.items.length);
 
-  if (!groups.length) {
-    nav.innerHTML = '<div class="empty">没搜到匹配项。</div>';
+  const hasFavoriteMatch = favoriteDocs.some(item => [item.group || '', item.title, item.url].join(' ').toLowerCase().includes(q));
+
+  if (!groups.length && !hasFavoriteMatch) {
+    buildEmpty('没搜到匹配项。');
     return;
   }
 
-  nav.innerHTML = groups.map(group => `
-    <section class="group">
-      <h3 class="group-title">${safeText(group.group)} <span class="group-meta">${group.items.length} 项${group.modules?.length ? ' · ' + safeText(group.modules.join(' / ')) : ''}</span></h3>
-      <div class="item-list">
-        ${group.items.map(item => `
-          <button class="item" data-url="${item.url}" data-title="${safeText(item.title)}" data-group="${safeText(group.group)}">
-            <span class="item-title">${safeText(item.title)}</span>
-            <span class="item-url">${safeText(item.url)}</span>
-          </button>
-        `).join('')}
-      </div>
-    </section>
-  `).join('');
+  nav.innerHTML = '';
+  renderFavoriteSection(nav, keyword);
 
-  nav.querySelectorAll('.item').forEach(btn => {
-    btn.addEventListener('click', () => selectDoc(btn));
+  groups.forEach(group => {
+    const section = document.createElement('section');
+    section.className = 'group';
+
+    const title = document.createElement('h3');
+    title.className = 'group-title';
+    title.textContent = group.group;
+
+    const meta = document.createElement('span');
+    meta.className = 'group-meta';
+    meta.textContent = `${group.items.length} 项${group.modules?.length ? ` · ${group.modules.join(' / ')}` : ''}`;
+    title.appendChild(meta);
+
+    const list = document.createElement('div');
+    list.className = 'item-list';
+    group.items.forEach(item => list.appendChild(createItemButton(item, group.group)));
+
+    section.append(title, list);
+    nav.appendChild(section);
   });
 }
 
@@ -104,10 +241,21 @@ function selectDoc(btn) {
   docTitle.textContent = title;
   docMeta.textContent = `${group} · ${url}`;
   openLink.href = url;
+  updateUrlForDoc(url);
+}
+
+function restoreActiveButton() {
+  if (!activeUrl) return;
+  const btn = document.querySelector(`.item[data-url="${CSS.escape(activeUrl)}"]`);
+  if (!btn) return;
+  if (activeButton) activeButton.classList.remove('active');
+  activeButton = btn;
+  activeButton.classList.add('active');
 }
 
 function selectFirst() {
-  const first = document.querySelector('.item');
+  const preferred = currentDocParam ? document.querySelector(`.item[data-url="${CSS.escape(currentDocParam)}"]`) : null;
+  const first = preferred || document.querySelector('.item');
   if (first) {
     selectDoc(first);
     return;
@@ -123,6 +271,7 @@ function clearSelection(message = '暂无文档可预览') {
   docTitle.textContent = message;
   docMeta.textContent = '请检查当前团队是否已有可用导航数据';
   openLink.href = '#';
+  updateUrlForDoc('');
 }
 
 function updateFocusModeButton() {
@@ -147,13 +296,20 @@ async function toggleFullscreen() {
         document.body.classList.add('focus-mode');
         updateFocusModeButton();
       }
-      const target = document.documentElement;
-      await target.requestFullscreen();
+      await document.documentElement.requestFullscreen();
     }
   } catch (error) {
     statusBar.textContent = `全屏切换失败：${error.message}`;
   }
   updateFullscreenButton();
+}
+
+function buildStatusText(json, fallbackLabel) {
+  const groupCount = json.summary?.groupCount ?? currentData.length;
+  const itemCount = json.summary?.itemCount ?? currentData.reduce((sum, g) => sum + g.items.length, 0);
+  const label = json.teamLabel || fallbackLabel;
+  const cacheText = json.stale ? ' · 当前展示的是最近一次成功数据' : (json.cached ? ' · 命中短缓存' : '');
+  return `${label} 导航已加载：${groupCount} 个分组 / ${itemCount} 个链接${cacheText}`;
 }
 
 async function loadDynamicData() {
@@ -162,25 +318,21 @@ async function loadDynamicData() {
     const resp = await fetch(`/api/nav-data?team=${encodeURIComponent(currentTeam)}`);
     const json = await resp.json();
     if (!resp.ok || !json.ok) {
-      const detail = [json.code, json.httpStatus, json.response?.result].filter(Boolean).join(' / ');
-      throw new Error(detail ? `${json.error} (${detail})` : (json.error || '动态接口返回失败'));
+      throw new Error(json.error || '动态接口返回失败');
     }
 
     const normalized = normalizeData(json.groups);
     if (!normalized || !normalized.length) {
-      throw new Error('接口返回成功，但 data.result 不是当前站点可识别的导航分组结构');
+      throw new Error('接口返回成功，但没有可识别的导航数据');
     }
 
     currentData = normalized;
     render(currentData, searchInput.value);
     selectFirst();
-    const groupCount = json.summary?.groupCount ?? currentData.length;
-    const itemCount = json.summary?.itemCount ?? currentData.reduce((sum, g) => sum + g.items.length, 0);
-    const loadedTeamLabel = json.teamLabel || currentTeamLabel;
-    statusBar.textContent = `${loadedTeamLabel} 动态数据已加载：${groupCount} 个分组 / ${itemCount} 个链接 · 来源 WPS webhook`;
+    statusBar.textContent = buildStatusText(json, currentTeamLabel);
   } catch (error) {
     currentData = [];
-    render(currentData, searchInput.value);
+    buildEmpty('导航数据加载失败');
     clearSelection('导航数据加载失败');
     statusBar.textContent = `${currentTeamLabel} 动态加载失败：${error.message}`;
   }
@@ -191,10 +343,14 @@ copyLink.addEventListener('click', async () => {
   try {
     await navigator.clipboard.writeText(activeUrl);
     copyLink.textContent = '已复制';
-    setTimeout(() => copyLink.textContent = '复制链接', 1500);
+    setTimeout(() => {
+      copyLink.textContent = '复制链接';
+    }, 1500);
   } catch {
     copyLink.textContent = '复制失败';
-    setTimeout(() => copyLink.textContent = '复制链接', 1500);
+    setTimeout(() => {
+      copyLink.textContent = '复制链接';
+    }, 1500);
   }
 });
 
@@ -203,23 +359,23 @@ focusModeBtn.addEventListener('click', toggleFocusMode);
 fullscreenBtn.addEventListener('click', toggleFullscreen);
 document.addEventListener('fullscreenchange', () => {
   updateFullscreenButton();
-  if (!document.fullscreenElement) {
-    statusBar.textContent = '已退出浏览器全屏';
-  } else {
-    statusBar.textContent = '已进入浏览器全屏';
-  }
+  statusBar.textContent = document.fullscreenElement ? '已进入浏览器全屏' : '已退出浏览器全屏';
 });
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && document.body.classList.contains('focus-mode') && !document.fullscreenElement) {
+document.addEventListener('keydown', event => {
+  if (event.key === 'Escape' && document.body.classList.contains('focus-mode') && !document.fullscreenElement) {
     document.body.classList.remove('focus-mode');
     updateFocusModeButton();
   }
 });
-searchInput.addEventListener('input', e => render(currentData, e.target.value));
+searchInput.addEventListener('input', event => {
+  render(currentData, event.target.value);
+  restoreActiveButton();
+});
 
+localStorage.removeItem(RECENTS_KEY);
+loadFavoriteDocs();
 updateTeamBranding();
-currentData = [];
-render(currentData);
+render([]);
 clearSelection('正在加载导航数据…');
 updateFocusModeButton();
 updateFullscreenButton();
