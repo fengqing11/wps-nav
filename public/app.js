@@ -122,6 +122,11 @@ function getVisibleGroupNames(keyword = '') {
     .map(group => group.name);
 }
 
+function isFocusedCollapseState(groupNames, activeGroup) {
+  if (!groupNames.length || !activeGroup || !groupNames.includes(activeGroup)) return false;
+  return groupNames.every(groupName => groupName === activeGroup ? !isGroupCollapsed(groupName) : isGroupCollapsed(groupName));
+}
+
 function updateToggleAllGroupsButton(keyword = searchInput?.value || '') {
   if (!toggleAllGroupsBtn) return;
   const groupNames = getVisibleGroupNames(keyword);
@@ -132,8 +137,9 @@ function updateToggleAllGroupsButton(keyword = searchInput?.value || '') {
   }
 
   toggleAllGroupsBtn.disabled = false;
-  const allCollapsed = groupNames.every(groupName => isGroupCollapsed(groupName));
-  toggleAllGroupsBtn.textContent = allCollapsed ? '全部展开' : '全部折叠';
+  const activeGroup = activeButton?.dataset.group || '';
+  const focusedCollapsed = isFocusedCollapseState(groupNames, activeGroup);
+  toggleAllGroupsBtn.textContent = focusedCollapsed ? '全部展开' : '全部折叠';
 }
 
 function toggleAllGroups() {
@@ -142,10 +148,10 @@ function toggleAllGroups() {
   if (!groupNames.length) return;
 
   const activeGroup = activeButton?.dataset.group || '';
-  const allCollapsed = groupNames.every(groupName => isGroupCollapsed(groupName));
+  const focusedCollapsed = isFocusedCollapseState(groupNames, activeGroup);
 
   groupNames.forEach(groupName => {
-    const shouldCollapse = allCollapsed ? false : groupName !== activeGroup;
+    const shouldCollapse = focusedCollapsed ? false : groupName !== activeGroup;
     setGroupCollapsed(groupName, shouldCollapse);
   });
 
@@ -156,7 +162,7 @@ function toggleAllGroups() {
   render(currentData, keyword);
   restoreActiveButton();
   updateToggleAllGroupsButton(keyword);
-  statusBar.textContent = allCollapsed ? '已全部展开当前分组' : '已折叠其他分组，并保留当前文档所在分组展开';
+  statusBar.textContent = focusedCollapsed ? '已全部展开当前分组' : '已折叠其他分组，并保留当前文档所在分组展开';
 }
 
 function isFavorite(url) {
