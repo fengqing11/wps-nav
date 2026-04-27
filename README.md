@@ -17,8 +17,10 @@
 参考：`.env.example`
 
 ```env
-WPS_WEBHOOK=https://www.kdocs.cn/api/v3/ide/file/corH6Pn7C9vm/script/V2-3VpBguvVTfZKpjuTNO5VE3/sync_task
-WPS_TOKEN=你的 AirScript Token
+WPS_WEBHOOK_JINGYUE=https://www.kdocs.cn/api/v3/ide/file/corH6Pn7C9vm/script/V2-3VpBguvVTfZKpjuTNO5VE3/sync_task
+WPS_TOKEN_JINGYUE=景越的 AirScript Token
+WPS_WEBHOOK_YUYAN=https://www.kdocs.cn/api/v3/ide/file/钰衍脚本地址/sync_task
+WPS_TOKEN_YUYAN=钰衍的 AirScript Token
 PORT=8090
 ```
 
@@ -51,11 +53,13 @@ npm run dev
 
 #### Cloudflare Pages 里要配的环境变量
 
-- `WPS_WEBHOOK`
-- `WPS_TOKEN`
+- `WPS_WEBHOOK_JINGYUE`
+- `WPS_TOKEN_JINGYUE`
+- `WPS_WEBHOOK_YUYAN`
+- `WPS_TOKEN_YUYAN`
 
 其中：
-- `WPS_TOKEN` 要作为 **Secret** 配置
+- 两个 `WPS_TOKEN_*` 都要作为 **Secret** 配置
 - 不要写进前端
 
 #### Pages 构建配置
@@ -65,6 +69,18 @@ npm run dev
 - **Build output directory**：`public`
 
 ---
+
+## 团队区分方式
+
+通过 URL 参数区分团队：
+
+- `?team=jingyue` → 景越
+- `?team=yuyan` → 钰衍
+
+示例：
+
+- `http://127.0.0.1:8090/?team=jingyue`
+- `http://127.0.0.1:8090/?team=yuyan`
 
 ## 当前行为
 

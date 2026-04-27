@@ -33,8 +33,18 @@ loadEnvFile();
 
 const PORT = Number(process.env.PORT || 8090);
 
-const WPS_WEBHOOK = process.env.WPS_WEBHOOK || 'https://www.kdocs.cn/api/v3/ide/file/corH6Pn7C9vm/script/V2-3VpBguvVTfZKpjuTNO5VE3/sync_task';
-const WPS_TOKEN = process.env.WPS_TOKEN || '';
+const TEAM_CONFIG = {
+  jingyue: {
+    label: '景越',
+    webhook: process.env.WPS_WEBHOOK_JINGYUE || process.env.WPS_WEBHOOK || 'https://www.kdocs.cn/api/v3/ide/file/corH6Pn7C9vm/script/V2-3VpBguvVTfZKpjuTNO5VE3/sync_task',
+    token: process.env.WPS_TOKEN_JINGYUE || process.env.WPS_TOKEN || ''
+  },
+  yuyan: {
+    label: '钰衍',
+    webhook: process.env.WPS_WEBHOOK_YUYAN || '',
+    token: process.env.WPS_TOKEN_YUYAN || ''
+  }
+};
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -120,15 +130,39 @@ function createWpsError(message, extras = {}) {
   return error;
 }
 
-function fetchWpsData() {
+function resolveTeam(team = 'jingyue') {
+  const teamKey = String(team || 'jingyue').trim().toLowerCase();
+  const config = TEAM_CONFIG[teamKey];
+  if (!config) {
+    return { error: createWpsError(`Unsupported team: ${teamKey}`, { code: 'UNSUPPORTED_TEAM' }) };
+  }
+  if (!config.token || !config.webhook) {
+    return {
+      error: createWpsError(`Missing webhook/token for team ${teamKey}`, {
+        code: 'MISSING_TEAM_CONFIG',
+        team: teamKey
+      })
+    };
+  }
+  return {
+    team: teamKey,
+    label: config.label,
+    webhook: config.webhook,
+    token: config.token
+  };
+}
+
+function fetchWpsData(team = 'jingyue') {
   return new Promise((resolve, reject) => {
-    if (!WPS_TOKEN) {
-      reject(createWpsError('Missing WPS_TOKEN environment variable', { code: 'MISSING_TOKEN' }));
+    const resolved = resolveTeam(team);
+    if (resolved.error) {
+      reject(resolved.error);
       return;
     }
 
+    const { webhook, token, team: teamKey, label } = resolved;
     const payload = JSON.stringify({ Context: { argv: {} } });
-    const url = new URL(WPS_WEBHOOK);
+    const url = new URL(webhook);
     const req = https.request({
       protocol: url.protocol,
       hostname: url.hostname,
@@ -136,7 +170,7 @@ function fetchWpsData() {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'AirScript-Token': WPS_TOKEN,
+        'AirScript-Token': token,
         'Content-Length': Buffer.byteLength(payload)
       }
     }, (resp) => {
@@ -167,6 +201,8 @@ function fetchWpsData() {
         }
 
         resolve({
+          team: teamKey,
+          teamLabel: label,
           raw: parsed,
           logs: parsed?.data?.logs || [],
           result: parsed?.data?.result
@@ -197,11 +233,14 @@ const server = http.createServer(async (req, res) => {
 
   if (url.pathname === '/api/nav-data') {
     try {
-      const fetched = await fetchWpsData();
+      const team = url.searchParams.get('team') || 'jingyue';
+      const fetched = await fetchWpsData(team);
       const groups = normalizeDynamicData(fetched.raw);
       sendJson(res, 200, {
         ok: true,
         source: 'wps-webhook',
+        team: fetched.team,
+        teamLabel: fetched.teamLabel,
         groups,
         logs: fetched.logs,
         raw: fetched.raw,

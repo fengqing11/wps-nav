@@ -10,10 +10,21 @@ const refreshBtn = document.getElementById('refreshBtn');
 const statusBar = document.getElementById('statusBar');
 const focusModeBtn = document.getElementById('focusModeBtn');
 const fullscreenBtn = document.getElementById('fullscreenBtn');
+const siteTitle = document.getElementById('siteTitle');
+const siteSubtitle = document.getElementById('siteSubtitle');
 
 let activeUrl = '';
 let activeButton = null;
 let currentData = [];
+
+const TEAM_LABELS = {
+  jingyue: '景越',
+  yuyan: '钰衍'
+};
+
+const urlParams = new URLSearchParams(window.location.search);
+const currentTeam = (urlParams.get('team') || 'jingyue').trim().toLowerCase();
+const currentTeamLabel = TEAM_LABELS[currentTeam] || currentTeam;
 
 const FALLBACK_DATA = [
   {
@@ -103,6 +114,12 @@ const FALLBACK_DATA = [
 
 function safeText(text) {
   return String(text).replace(/[&<>\"]/g, s => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[s]));
+}
+
+function updateTeamBranding() {
+  document.title = `${currentTeamLabel}文档导航`;
+  if (siteTitle) siteTitle.textContent = `${currentTeamLabel}文档导航`;
+  if (siteSubtitle) siteSubtitle.textContent = `${currentTeamLabel} 团队的 WPS 文档内嵌导航小站`;
 }
 
 function normalizeData(groups) {
@@ -211,9 +228,9 @@ async function toggleFullscreen() {
 }
 
 async function loadDynamicData() {
-  statusBar.textContent = '正在从 WPS webhook 拉取最新导航数据…';
+  statusBar.textContent = `正在拉取 ${currentTeamLabel} 的最新导航数据…`;
   try {
-    const resp = await fetch('/api/nav-data');
+    const resp = await fetch(`/api/nav-data?team=${encodeURIComponent(currentTeam)}`);
     const json = await resp.json();
     if (!resp.ok || !json.ok) {
       const detail = [json.code, json.httpStatus, json.response?.result].filter(Boolean).join(' / ');
@@ -230,12 +247,13 @@ async function loadDynamicData() {
     selectFirst();
     const groupCount = json.summary?.groupCount ?? currentData.length;
     const itemCount = json.summary?.itemCount ?? currentData.reduce((sum, g) => sum + g.items.length, 0);
-    statusBar.textContent = `动态数据已加载：${groupCount} 个分组 / ${itemCount} 个链接 · 来源 WPS webhook`;
+    const loadedTeamLabel = json.teamLabel || currentTeamLabel;
+    statusBar.textContent = `${loadedTeamLabel} 动态数据已加载：${groupCount} 个分组 / ${itemCount} 个链接 · 来源 WPS webhook`;
   } catch (error) {
     currentData = FALLBACK_DATA;
     render(currentData, searchInput.value);
     selectFirst();
-    statusBar.textContent = `动态加载失败，已切换到静态兜底数据：${error.message}`;
+    statusBar.textContent = `${currentTeamLabel} 动态加载失败，已切换到静态兜底数据：${error.message}`;
   }
 }
 
@@ -270,6 +288,7 @@ document.addEventListener('keydown', (e) => {
 });
 searchInput.addEventListener('input', e => render(currentData, e.target.value));
 
+updateTeamBranding();
 currentData = FALLBACK_DATA;
 render(currentData);
 selectFirst();

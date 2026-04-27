@@ -43,17 +43,57 @@ function normalizeDynamicData(raw) {
   return null;
 }
 
-export async function onRequestGet(context) {
-  const { env } = context;
-  const webhook = env.WPS_WEBHOOK;
-  const token = env.WPS_TOKEN;
+const TEAM_CONFIG = {
+  jingyue: {
+    label: '景越',
+    webhookKey: 'WPS_WEBHOOK_JINGYUE',
+    tokenKey: 'WPS_TOKEN_JINGYUE'
+  },
+  yuyan: {
+    label: '钰衍',
+    webhookKey: 'WPS_WEBHOOK_YUYAN',
+    tokenKey: 'WPS_TOKEN_YUYAN'
+  }
+};
 
+function resolveTeam(env, team = 'jingyue') {
+  const teamKey = String(team || 'jingyue').trim().toLowerCase();
+  const config = TEAM_CONFIG[teamKey];
+  if (!config) return { error: `Unsupported team: ${teamKey}` };
+
+  const webhook = env[config.webhookKey];
+  const token = env[config.tokenKey];
   if (!webhook || !token) {
+    return {
+      error: `Missing ${config.webhookKey} or ${config.tokenKey} binding`,
+      team: teamKey,
+      label: config.label
+    };
+  }
+
+  return {
+    team: teamKey,
+    label: config.label,
+    webhook,
+    token
+  };
+}
+
+export async function onRequestGet(context) {
+  const { env, request } = context;
+  const url = new URL(request.url);
+  const resolved = resolveTeam(env, url.searchParams.get('team') || 'jingyue');
+
+  if (resolved.error) {
     return Response.json({
       ok: false,
-      error: 'Missing WPS_WEBHOOK or WPS_TOKEN binding'
+      error: resolved.error,
+      team: resolved.team || null,
+      availableTeams: Object.keys(TEAM_CONFIG)
     }, { status: 500 });
   }
+
+  const { webhook, token, team, label } = resolved;
 
   try {
     const resp = await fetch(webhook, {
@@ -81,6 +121,8 @@ export async function onRequestGet(context) {
     return Response.json({
       ok: true,
       source: 'wps-webhook',
+      team,
+      teamLabel: label,
       groups,
       logs: raw?.data?.logs || [],
       raw,
