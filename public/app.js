@@ -47,7 +47,11 @@ function getCurrentTheme() {
 
 function updateThemeToggleButton() {
   if (!themeToggleBtn) return;
-  themeToggleBtn.textContent = getCurrentTheme() === 'dark' ? '亮色主题' : '暗色主题';
+  const isDark = getCurrentTheme() === 'dark';
+  const nextLabel = isDark ? '切换到亮色主题' : '切换到暗色主题';
+  themeToggleBtn.textContent = isDark ? '☀️' : '🌙';
+  themeToggleBtn.setAttribute('aria-label', nextLabel);
+  themeToggleBtn.setAttribute('title', nextLabel);
 }
 
 function applyTheme(theme, { persist = true } = {}) {

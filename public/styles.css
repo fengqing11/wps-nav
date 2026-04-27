@@ -296,6 +296,32 @@ body.focus-mode .sidebar {
   gap: 10px;
   align-items: center;
 }
+.icon-btn {
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: color-mix(in srgb, var(--panel) 76%, transparent);
+  color: var(--text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 4px 14px rgba(31, 42, 68, .08);
+  transition: transform .18s ease, background .18s ease, border-color .18s ease, box-shadow .18s ease;
+}
+.icon-btn:hover {
+  transform: translateY(-1px);
+  background: color-mix(in srgb, var(--panel) 88%, var(--hover));
+  border-color: color-mix(in srgb, var(--accent) 26%, var(--line));
+  box-shadow: 0 8px 18px rgba(31, 42, 68, .12);
+}
+.icon-btn:active {
+  transform: translateY(0);
+}
 .btn {
   border: 0;
   border-radius: 12px;
@@ -408,4 +434,5 @@ mark {
   .sidebar { border-right: 0; border-bottom: 1px solid var(--line); }
   .topbar { flex-direction: column; align-items: flex-start; }
   .actions { width: 100%; flex-wrap: wrap; }
+  .icon-btn { width: 40px; height: 40px; }
 }
