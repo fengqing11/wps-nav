@@ -33,16 +33,16 @@ loadEnvFile();
 
 const PORT = Number(process.env.PORT || 8090);
 
+const WPS_TOKEN = process.env.WPS_TOKEN || '';
+
 const TEAM_CONFIG = {
   jingyue: {
     label: '景越',
-    webhook: process.env.WPS_WEBHOOK_JINGYUE || process.env.WPS_WEBHOOK || 'https://www.kdocs.cn/api/v3/ide/file/corH6Pn7C9vm/script/V2-3VpBguvVTfZKpjuTNO5VE3/sync_task',
-    token: process.env.WPS_TOKEN_JINGYUE || process.env.WPS_TOKEN || ''
+    webhook: process.env.WPS_WEBHOOK_JINGYUE || process.env.WPS_WEBHOOK || 'https://www.kdocs.cn/api/v3/ide/file/corH6Pn7C9vm/script/V2-3VpBguvVTfZKpjuTNO5VE3/sync_task'
   },
   yuyan: {
     label: '钰衍',
-    webhook: process.env.WPS_WEBHOOK_YUYAN || '',
-    token: process.env.WPS_TOKEN_YUYAN || ''
+    webhook: process.env.WPS_WEBHOOK_YUYAN || ''
   }
 };
 
@@ -136,9 +136,9 @@ function resolveTeam(team = 'jingyue') {
   if (!config) {
     return { error: createWpsError(`Unsupported team: ${teamKey}`, { code: 'UNSUPPORTED_TEAM' }) };
   }
-  if (!config.token || !config.webhook) {
+  if (!config.webhook || !WPS_TOKEN) {
     return {
-      error: createWpsError(`Missing webhook/token for team ${teamKey}`, {
+      error: createWpsError(`Missing webhook/WPS_TOKEN for team ${teamKey}`, {
         code: 'MISSING_TEAM_CONFIG',
         team: teamKey
       })
@@ -148,7 +148,7 @@ function resolveTeam(team = 'jingyue') {
     team: teamKey,
     label: config.label,
     webhook: config.webhook,
-    token: config.token
+    token: WPS_TOKEN
   };
 }
 

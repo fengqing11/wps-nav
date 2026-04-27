@@ -46,13 +46,11 @@ function normalizeDynamicData(raw) {
 const TEAM_CONFIG = {
   jingyue: {
     label: '景越',
-    webhookKey: 'WPS_WEBHOOK_JINGYUE',
-    tokenKey: 'WPS_TOKEN_JINGYUE'
+    webhookKey: 'WPS_WEBHOOK_JINGYUE'
   },
   yuyan: {
     label: '钰衍',
-    webhookKey: 'WPS_WEBHOOK_YUYAN',
-    tokenKey: 'WPS_TOKEN_YUYAN'
+    webhookKey: 'WPS_WEBHOOK_YUYAN'
   }
 };
 
@@ -62,10 +60,10 @@ function resolveTeam(env, team = 'jingyue') {
   if (!config) return { error: `Unsupported team: ${teamKey}` };
 
   const webhook = env[config.webhookKey];
-  const token = env[config.tokenKey];
+  const token = env.WPS_TOKEN;
   if (!webhook || !token) {
     return {
-      error: `Missing ${config.webhookKey} or ${config.tokenKey} binding`,
+      error: `Missing ${config.webhookKey} or WPS_TOKEN binding`,
       team: teamKey,
       label: config.label
     };

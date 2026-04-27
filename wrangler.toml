@@ -4,12 +4,10 @@ compatibility_date = "2026-04-26"
 
 [vars]
 WPS_WEBHOOK_JINGYUE = "https://www.kdocs.cn/api/v3/ide/file/corH6Pn7C9vm/script/V2-3VpBguvVTfZKpjuTNO5VE3/sync_task"
-WPS_TOKEN_JINGYUE = "请改为 Cloudflare Secret，不要提交真实值"
 WPS_WEBHOOK_YUYAN = "https://www.kdocs.cn/api/v3/ide/file/ctSXn5QtcJcF/script/V2-6J8IjDAyuskT24h0VcppLj/sync_task"
-WPS_TOKEN_YUYAN = "请改为 Cloudflare Secret，不要提交真实值"
+WPS_TOKEN = "请改为 Cloudflare Secret，不要提交真实值"
 
 [env.preview.vars]
 WPS_WEBHOOK_JINGYUE = "https://www.kdocs.cn/api/v3/ide/file/corH6Pn7C9vm/script/V2-3VpBguvVTfZKpjuTNO5VE3/sync_task"
-WPS_TOKEN_JINGYUE = "请改为 Cloudflare Secret，不要提交真实值"
 WPS_WEBHOOK_YUYAN = "https://www.kdocs.cn/api/v3/ide/file/ctSXn5QtcJcF/script/V2-6J8IjDAyuskT24h0VcppLj/sync_task"
-WPS_TOKEN_YUYAN = "请改为 Cloudflare Secret，不要提交真实值"
+WPS_TOKEN = "请改为 Cloudflare Secret，不要提交真实值"

@@ -18,9 +18,8 @@
 
 ```env
 WPS_WEBHOOK_JINGYUE=https://www.kdocs.cn/api/v3/ide/file/corH6Pn7C9vm/script/V2-3VpBguvVTfZKpjuTNO5VE3/sync_task
-WPS_TOKEN_JINGYUE=景越的 AirScript Token
 WPS_WEBHOOK_YUYAN=https://www.kdocs.cn/api/v3/ide/file/钰衍脚本地址/sync_task
-WPS_TOKEN_YUYAN=钰衍的 AirScript Token
+WPS_TOKEN=公共 AirScript Token
 PORT=8090
 ```
 
@@ -54,12 +53,11 @@ npm run dev
 #### Cloudflare Pages 里要配的环境变量
 
 - `WPS_WEBHOOK_JINGYUE`
-- `WPS_TOKEN_JINGYUE`
 - `WPS_WEBHOOK_YUYAN`
-- `WPS_TOKEN_YUYAN`
+- `WPS_TOKEN`
 
 其中：
-- 两个 `WPS_TOKEN_*` 都要作为 **Secret** 配置
+- `WPS_TOKEN` 要作为 **Secret** 配置
 - 不要写进前端
 
 #### Pages 构建配置
