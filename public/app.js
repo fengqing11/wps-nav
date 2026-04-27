@@ -374,6 +374,12 @@ function render(data, keyword = '') {
   updateToggleAllGroupsButton(keyword);
 }
 
+function updateActiveButtons() {
+  document.querySelectorAll('.item.active').forEach(el => el.classList.remove('active'));
+  if (!activeUrl) return;
+  document.querySelectorAll(`.item[data-url="${CSS.escape(activeUrl)}"]`).forEach(el => el.classList.add('active'));
+}
+
 function selectDoc(btn) {
   const url = btn.dataset.url;
   const title = btn.dataset.title;
@@ -382,9 +388,8 @@ function selectDoc(btn) {
   expandGroup(group);
 
   activeUrl = url;
-  if (activeButton) activeButton.classList.remove('active');
   activeButton = btn;
-  activeButton.classList.add('active');
+  updateActiveButtons();
 
   viewer.src = url;
   docTitle.textContent = title;
@@ -397,9 +402,8 @@ function restoreActiveButton() {
   if (!activeUrl) return;
   const btn = document.querySelector(`.item[data-url="${CSS.escape(activeUrl)}"]`);
   if (!btn) return;
-  if (activeButton) activeButton.classList.remove('active');
   activeButton = btn;
-  activeButton.classList.add('active');
+  updateActiveButtons();
 }
 
 function selectFirst() {
@@ -414,8 +418,8 @@ function selectFirst() {
 
 function clearSelection(message = '暂无文档可预览') {
   activeUrl = '';
-  if (activeButton) activeButton.classList.remove('active');
   activeButton = null;
+  updateActiveButtons();
   viewer.src = 'about:blank';
   docTitle.textContent = message;
   docMeta.textContent = '请检查当前团队是否已有可用导航数据';
