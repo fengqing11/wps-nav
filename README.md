@@ -52,13 +52,33 @@ npm run dev
 
 #### Cloudflare Pages 里要配的环境变量
 
+`wrangler.toml` 里只保留这两个明文变量：
+
 - `WPS_WEBHOOK_JINGYUE`
 - `WPS_WEBHOOK_YUYAN`
-- `WPS_TOKEN`
 
-其中：
-- `WPS_TOKEN` 要作为 **Secret** 配置
-- 不要写进前端
+`WPS_TOKEN` 不要写在 `wrangler.toml` 的 `[vars]` 里，要作为 **Secret** 单独配置。
+
+可用官方命令：
+
+```bash
+wrangler pages secret put WPS_TOKEN --project-name wps-nav
+```
+
+如果要给 preview 环境单独配置：
+
+```bash
+wrangler pages secret put WPS_TOKEN --project-name wps-nav --env preview
+```
+
+另外，当前 `wrangler.toml` 已声明：
+
+```toml
+[secrets]
+required = ["WPS_TOKEN"]
+```
+
+这样本地开发和部署时都会校验 `WPS_TOKEN` 是否存在。
 
 #### Pages 构建配置
 
