@@ -277,10 +277,9 @@ function createItemButton(item, groupName) {
 function createGroupSection(titleText, metaText, items, sectionClass = '', options = {}) {
   const { storageKey = titleText, collapsible = true } = options;
   const collapsed = collapsible ? isGroupCollapsed(storageKey) : false;
-  const containsActive = Boolean(activeUrl) && items.some(({ item }) => item?.url === activeUrl);
 
   const section = document.createElement('section');
-  section.className = `group${sectionClass ? ` ${sectionClass}` : ''}${collapsed ? ' collapsed' : ''}${containsActive ? ' group-active' : ''}`;
+  section.className = `group${sectionClass ? ` ${sectionClass}` : ''}${collapsed ? ' collapsed' : ''}`;
 
   const header = document.createElement('button');
   header.type = 'button';

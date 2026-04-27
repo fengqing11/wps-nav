@@ -13,10 +13,6 @@
   --card-shadow: 0 10px 24px rgba(48, 72, 120, .08);
   --group-title-bg: #f1f5ff;
   --group-title-hover: #e9f0ff;
-  --group-active-border: rgba(79,124,255,.28);
-  --group-active-shadow: 0 0 0 1px rgba(79,124,255,.14), 0 12px 28px rgba(79,124,255,.10);
-  --group-active-title-bg: linear-gradient(90deg, rgba(79,124,255,.16), rgba(79,124,255,.07));
-  --group-active-title-hover: linear-gradient(90deg, rgba(79,124,255,.20), rgba(79,124,255,.09));
   --hover: rgba(79,124,255,.10);
   --active-item-bg: linear-gradient(90deg, rgba(79,124,255,.18), rgba(79,124,255,.07));
   --favorite: #f4b400;
@@ -46,10 +42,6 @@
   --card-shadow: none;
   --group-title-bg: rgba(255,255,255,.03);
   --group-title-hover: rgba(255,255,255,.05);
-  --group-active-border: rgba(115,167,255,.32);
-  --group-active-shadow: 0 0 0 1px rgba(115,167,255,.18), 0 10px 26px rgba(4, 10, 24, .22);
-  --group-active-title-bg: linear-gradient(90deg, rgba(79,124,255,.20), rgba(79,124,255,.08));
-  --group-active-title-hover: linear-gradient(90deg, rgba(79,124,255,.24), rgba(79,124,255,.10));
   --hover: rgba(115,167,255,.12);
   --active-item-bg: linear-gradient(90deg, rgba(79,124,255,.25), rgba(79,124,255,.08));
   --favorite: #ffd76a;
@@ -166,11 +158,6 @@ body.focus-mode .sidebar {
   background: var(--card);
   box-shadow: var(--card-shadow);
   overflow: hidden;
-  transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
-}
-.group.group-active {
-  border-color: var(--group-active-border);
-  box-shadow: var(--group-active-shadow);
 }
 .favorite-group {
   border-color: color-mix(in srgb, var(--favorite) 35%, transparent);
@@ -196,12 +183,6 @@ body.focus-mode .sidebar {
 }
 .group-title:hover {
   background: var(--group-title-hover);
-}
-.group.group-active .group-title {
-  background: var(--group-active-title-bg);
-}
-.group.group-active .group-title:hover {
-  background: var(--group-active-title-hover);
 }
 .group-title-text {
   min-width: 0;
