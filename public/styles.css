@@ -16,6 +16,7 @@
   --hover: rgba(79,124,255,.10);
   --active-item-bg: linear-gradient(90deg, rgba(79,124,255,.18), rgba(79,124,255,.07));
   --favorite: #f4b400;
+  --favorite-muted: #9aa6bf;
   --sidebar-bg: rgba(255, 255, 255, .82);
   --topbar-bg: rgba(255, 255, 255, .78);
   --notice-bg: rgba(255,214,102,.18);
@@ -44,6 +45,7 @@
   --hover: rgba(115,167,255,.12);
   --active-item-bg: linear-gradient(90deg, rgba(79,124,255,.25), rgba(79,124,255,.08));
   --favorite: #ffd76a;
+  --favorite-muted: rgba(255,255,255,.45);
   --sidebar-bg: rgba(8, 12, 22, .88);
   --topbar-bg: rgba(10, 15, 29, .55);
   --notice-bg: rgba(255,214,102,.08);
@@ -250,16 +252,20 @@ body.focus-mode .sidebar {
 .favorite-toggle {
   border: 0;
   background: transparent;
-  color: rgba(255,255,255,.45);
+  color: var(--favorite-muted);
   cursor: pointer;
   font-size: 18px;
   line-height: 1;
   padding: 0;
   flex: 0 0 auto;
+  transition: color .18s ease, transform .18s ease;
 }
 .favorite-toggle:hover,
 .favorite-toggle.active {
   color: var(--favorite);
+}
+.favorite-toggle:hover {
+  transform: scale(1.06);
 }
 .main {
   display: grid;
