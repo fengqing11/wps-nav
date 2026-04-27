@@ -66,6 +66,7 @@ body.focus-mode .sidebar {
   display: flex;
   gap: 8px;
   margin-top: 10px;
+  flex-wrap: wrap;
 }
 .status-bar {
   margin-top: 10px;
@@ -230,6 +231,10 @@ body.focus-mode .sidebar {
 .btn.secondary {
   background: rgba(255,255,255,.08);
   border: 1px solid var(--line);
+}
+.btn:disabled {
+  opacity: .55;
+  cursor: not-allowed;
 }
 .viewer-wrap {
   display: grid;

@@ -6,6 +6,7 @@ const docMeta = document.getElementById('docMeta');
 const openLink = document.getElementById('openLink');
 const copyLink = document.getElementById('copyLink');
 const refreshBtn = document.getElementById('refreshBtn');
+const toggleAllGroupsBtn = document.getElementById('toggleAllGroupsBtn');
 const statusBar = document.getElementById('statusBar');
 const focusModeBtn = document.getElementById('focusModeBtn');
 const fullscreenBtn = document.getElementById('fullscreenBtn');
@@ -101,6 +102,61 @@ function setGroupCollapsed(groupName, collapsed) {
     delete collapsedGroups[key];
   }
   saveCollapsedGroups();
+}
+
+function expandGroup(groupName) {
+  setGroupCollapsed(groupName, false);
+}
+
+function getVisibleGroupNames(keyword = '') {
+  const q = keyword.trim().toLowerCase();
+  return currentData
+    .map(group => ({
+      name: group.group,
+      items: group.items.filter(item => {
+        if (!q) return true;
+        return [group.group, (group.modules || []).join(' '), item.title, item.url].join(' ').toLowerCase().includes(q);
+      })
+    }))
+    .filter(group => group.items.length)
+    .map(group => group.name);
+}
+
+function updateToggleAllGroupsButton(keyword = searchInput?.value || '') {
+  if (!toggleAllGroupsBtn) return;
+  const groupNames = getVisibleGroupNames(keyword);
+  if (!groupNames.length) {
+    toggleAllGroupsBtn.textContent = '全部折叠';
+    toggleAllGroupsBtn.disabled = true;
+    return;
+  }
+
+  toggleAllGroupsBtn.disabled = false;
+  const allCollapsed = groupNames.every(groupName => isGroupCollapsed(groupName));
+  toggleAllGroupsBtn.textContent = allCollapsed ? '全部展开' : '全部折叠';
+}
+
+function toggleAllGroups() {
+  const keyword = searchInput?.value || '';
+  const groupNames = getVisibleGroupNames(keyword);
+  if (!groupNames.length) return;
+
+  const activeGroup = activeButton?.dataset.group || '';
+  const allCollapsed = groupNames.every(groupName => isGroupCollapsed(groupName));
+
+  groupNames.forEach(groupName => {
+    const shouldCollapse = allCollapsed ? false : groupName !== activeGroup;
+    setGroupCollapsed(groupName, shouldCollapse);
+  });
+
+  if (activeGroup) {
+    expandGroup(activeGroup);
+  }
+
+  render(currentData, keyword);
+  restoreActiveButton();
+  updateToggleAllGroupsButton(keyword);
+  statusBar.textContent = allCollapsed ? '已全部展开当前分组' : '已折叠其他分组，并保留当前文档所在分组展开';
 }
 
 function isFavorite(url) {
@@ -266,6 +322,9 @@ function render(data, keyword = '') {
   renderFavoriteSection(nav, keyword);
 
   groups.forEach(group => {
+    if (activeButton?.dataset.group === group.group) {
+      expandGroup(group.group);
+    }
     nav.appendChild(createGroupSection(
       group.group,
       `${group.items.length} 项${group.modules?.length ? ` · ${group.modules.join(' / ')}` : ''}`,
@@ -274,12 +333,16 @@ function render(data, keyword = '') {
       { storageKey: group.group }
     ));
   });
+
+  updateToggleAllGroupsButton(keyword);
 }
 
 function selectDoc(btn) {
   const url = btn.dataset.url;
   const title = btn.dataset.title;
   const group = btn.dataset.group;
+
+  expandGroup(group);
 
   activeUrl = url;
   if (activeButton) activeButton.classList.remove('active');
@@ -404,6 +467,7 @@ copyLink.addEventListener('click', async () => {
 });
 
 refreshBtn.addEventListener('click', loadDynamicData);
+toggleAllGroupsBtn?.addEventListener('click', toggleAllGroups);
 focusModeBtn.addEventListener('click', toggleFocusMode);
 fullscreenBtn.addEventListener('click', toggleFullscreen);
 document.addEventListener('fullscreenchange', () => {
@@ -430,3 +494,4 @@ clearSelection('正在加载导航数据…');
 updateFocusModeButton();
 updateFullscreenButton();
 loadDynamicData();
+updateToggleAllGroupsButton();
