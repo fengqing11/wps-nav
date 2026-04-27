@@ -102,11 +102,10 @@ required = ["WPS_TOKEN"]
 
 ## 当前行为
 
-- 页面先显示静态兜底导航
-- 然后请求 `/api/nav-data`
+- 页面启动后直接请求 `/api/nav-data`
 - 本地 Node 调试时，`/api/nav-data` 由 `server.mjs` 提供
 - Cloudflare Pages 部署时，`/api/nav-data` 由 `functions/api/nav-data.js` 提供
-- 如果动态数据失败，则继续使用静态兜底数据
+- 如果动态数据失败，页面会明确提示失败，不再展示静态兜底数据
 
 ## 为什么不前端直调 WPS webhook
 
