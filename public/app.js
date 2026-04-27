@@ -16,6 +16,7 @@ let activeUrl = '';
 let activeButton = null;
 let currentData = [];
 let favoriteDocs = [];
+let collapsedGroups = {};
 
 const TEAM_LABELS = {
   jingyue: '景越',
@@ -28,6 +29,7 @@ const currentTeamLabel = TEAM_LABELS[currentTeam] || currentTeam;
 const currentDocParam = urlParams.get('doc') || '';
 const RECENTS_KEY = `jingyue-nav:recent:${currentTeam}`;
 const FAVORITES_KEY = `jingyue-nav:favorites:${currentTeam}`;
+const COLLAPSED_GROUPS_KEY = `jingyue-nav:collapsed-groups:${currentTeam}`;
 const FAVORITES_LIMIT = 20;
 
 function updateTeamBranding() {
@@ -68,6 +70,37 @@ function loadFavoriteDocs() {
 
 function saveFavoriteDocs() {
   localStorage.setItem(FAVORITES_KEY, JSON.stringify(favoriteDocs.slice(0, FAVORITES_LIMIT)));
+}
+
+function loadCollapsedGroups() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(COLLAPSED_GROUPS_KEY) || '{}');
+    collapsedGroups = parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+  } catch {
+    collapsedGroups = {};
+  }
+}
+
+function saveCollapsedGroups() {
+  localStorage.setItem(COLLAPSED_GROUPS_KEY, JSON.stringify(collapsedGroups));
+}
+
+function getGroupKey(groupName) {
+  return String(groupName || '未分组');
+}
+
+function isGroupCollapsed(groupName) {
+  return Boolean(collapsedGroups[getGroupKey(groupName)]);
+}
+
+function setGroupCollapsed(groupName, collapsed) {
+  const key = getGroupKey(groupName);
+  if (collapsed) {
+    collapsedGroups[key] = true;
+  } else {
+    delete collapsedGroups[key];
+  }
+  saveCollapsedGroups();
 }
 
 function isFavorite(url) {
@@ -148,24 +181,49 @@ function createItemButton(item, groupName) {
   return btn;
 }
 
-function buildSection(titleText, metaText, items, sectionClass = '') {
-  const section = document.createElement('section');
-  section.className = `group${sectionClass ? ` ${sectionClass}` : ''}`;
+function createGroupSection(titleText, metaText, items, sectionClass = '', options = {}) {
+  const { storageKey = titleText, collapsible = true } = options;
+  const collapsed = collapsible ? isGroupCollapsed(storageKey) : false;
 
-  const title = document.createElement('h3');
-  title.className = 'group-title';
-  title.textContent = titleText;
+  const section = document.createElement('section');
+  section.className = `group${sectionClass ? ` ${sectionClass}` : ''}${collapsed ? ' collapsed' : ''}`;
+
+  const header = document.createElement('button');
+  header.type = 'button';
+  header.className = 'group-title';
+  header.setAttribute('aria-expanded', String(!collapsed));
+
+  const titleTextEl = document.createElement('span');
+  titleTextEl.className = 'group-title-text';
+  titleTextEl.textContent = titleText;
 
   const meta = document.createElement('span');
   meta.className = 'group-meta';
   meta.textContent = metaText;
-  title.appendChild(meta);
+
+  const chevron = document.createElement('span');
+  chevron.className = 'group-chevron';
+  chevron.setAttribute('aria-hidden', 'true');
+  chevron.textContent = '▾';
+
+  header.append(titleTextEl, meta, chevron);
 
   const list = document.createElement('div');
   list.className = 'item-list';
   items.forEach(({ item, group }) => list.appendChild(createItemButton(item, group)));
 
-  section.append(title, list);
+  if (collapsible) {
+    header.addEventListener('click', () => {
+      const nextCollapsed = !section.classList.contains('collapsed');
+      section.classList.toggle('collapsed', nextCollapsed);
+      header.setAttribute('aria-expanded', String(!nextCollapsed));
+      setGroupCollapsed(storageKey, nextCollapsed);
+    });
+  } else {
+    header.disabled = true;
+  }
+
+  section.append(header, list);
   return section;
 }
 
@@ -180,7 +238,9 @@ function renderFavoriteSection(container, keyword) {
     });
 
   if (!matched.length) return;
-  container.appendChild(buildSection('我的收藏', `${matched.length} 项`, matched, 'favorite-group'));
+  container.appendChild(createGroupSection('我的收藏', `${matched.length} 项`, matched, 'favorite-group', {
+    storageKey: '__favorites__'
+  }));
 }
 
 function render(data, keyword = '') {
@@ -206,24 +266,13 @@ function render(data, keyword = '') {
   renderFavoriteSection(nav, keyword);
 
   groups.forEach(group => {
-    const section = document.createElement('section');
-    section.className = 'group';
-
-    const title = document.createElement('h3');
-    title.className = 'group-title';
-    title.textContent = group.group;
-
-    const meta = document.createElement('span');
-    meta.className = 'group-meta';
-    meta.textContent = `${group.items.length} 项${group.modules?.length ? ` · ${group.modules.join(' / ')}` : ''}`;
-    title.appendChild(meta);
-
-    const list = document.createElement('div');
-    list.className = 'item-list';
-    group.items.forEach(item => list.appendChild(createItemButton(item, group.group)));
-
-    section.append(title, list);
-    nav.appendChild(section);
+    nav.appendChild(createGroupSection(
+      group.group,
+      `${group.items.length} 项${group.modules?.length ? ` · ${group.modules.join(' / ')}` : ''}`,
+      group.items.map(item => ({ item, group: group.group })),
+      '',
+      { storageKey: group.group }
+    ));
   });
 }
 
@@ -374,6 +423,7 @@ searchInput.addEventListener('input', event => {
 
 localStorage.removeItem(RECENTS_KEY);
 loadFavoriteDocs();
+loadCollapsedGroups();
 updateTeamBranding();
 render([]);
 clearSelection('正在加载导航数据…');
